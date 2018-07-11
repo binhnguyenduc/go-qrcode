@@ -73,7 +73,7 @@ import (
 func Encode(content string, level RecoveryLevel, size int) ([]byte, error) {
 	var q *QRCode
 
-	q, err := New(content, level)
+	q, err := New(content, level, nil)
 
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func Encode(content string, level RecoveryLevel, size int) ([]byte, error) {
 func WriteFile(content string, level RecoveryLevel, size int, filename string) error {
 	var q *QRCode
 
-	q, err := New(content, level)
+	q, err := New(content, level, nil)
 
 	if err != nil {
 		return err
@@ -110,7 +110,7 @@ func WriteColorFile(content string, level RecoveryLevel, size int, background,
 
 	var q *QRCode
 
-	q, err := New(content, level)
+	q, err := New(content, level, nil)
 
 	q.BackgroundColor = background
 	q.ForegroundColor = foreground
@@ -143,13 +143,22 @@ type QRCode struct {
 	mask   int
 }
 
+// qrcode option.
+type Option struct {
+	// set white space size.
+	QuitZoneSize int
+	// set drawing options.
+	ForegroundColor color.Color
+	BackgroundColor color.Color
+}
+
 // New constructs a QRCode.
 //
 //	var q *qrcode.QRCode
 //	q, err := qrcode.New("my content", qrcode.Medium)
 //
 // An error occurs if the content is too long.
-func New(content string, level RecoveryLevel) (*QRCode, error) {
+func New(content string, level RecoveryLevel, option *Option) (*QRCode, error) {
 	encoders := []dataEncoderType{dataEncoderType1To9, dataEncoderType10To26,
 		dataEncoderType27To40}
 
@@ -192,7 +201,17 @@ func New(content string, level RecoveryLevel) (*QRCode, error) {
 		data:    encoded,
 		version: *chosenVersion,
 	}
-
+	if option != nil {
+		//set drawing option
+		if option.BackgroundColor != nil {
+			q.BackgroundColor = option.BackgroundColor
+		}
+		if option.ForegroundColor != nil {
+			q.ForegroundColor = option.ForegroundColor
+		}
+		// set quitZoneSize
+		q.version.setQuietZoneSize(option.QuitZoneSize)
+	}
 	q.encode(chosenVersion.numTerminatorBitsRequired(encoded.Len()))
 
 	return q, nil
