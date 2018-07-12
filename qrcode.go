@@ -63,6 +63,13 @@ import (
 	reedsolomon "github.com/skip2/go-qrcode/reedsolomon"
 )
 
+const (
+	otherPoint             = iota
+	finderPatternPoint     = 1
+	alignmentPatternsPoint = 2
+	timingPatternsPoint    = 3
+)
+
 // Encode a QR Code and return a raw PNG image.
 //
 // size is both the image width and height in pixels. If size is too small then
@@ -305,9 +312,9 @@ func (q *QRCode) Image(size int) image.Image {
 	pixelsPerModule := size / realSize
 
 	// Center the symbol within the image.
-	offset := (size - realSize*pixelsPerModule) / 2
+	// offset := (size - realSize*pixelsPerModule) / 2
 
-	rect := image.Rectangle{Min: image.Point{0, 0}, Max: image.Point{size, size}}
+	rect := image.Rectangle{Min: image.Point{0, 0}, Max: image.Point{pixelsPerModule * realSize, pixelsPerModule * realSize}}
 
 	// Saves a few bytes to have them in this order
 	p := color.Palette([]color.Color{q.BackgroundColor, q.ForegroundColor})
@@ -323,8 +330,8 @@ func (q *QRCode) Image(size int) image.Image {
 	for y, row := range bitmap {
 		for x, v := range row {
 			if v {
-				startX := x*pixelsPerModule + offset
-				startY := y*pixelsPerModule + offset
+				startX := x * pixelsPerModule
+				startY := y * pixelsPerModule
 				for i := startX; i < startX+pixelsPerModule; i++ {
 					for j := startY; j < startY+pixelsPerModule; j++ {
 						img.Set(i, j, q.ForegroundColor)
@@ -332,6 +339,11 @@ func (q *QRCode) Image(size int) image.Image {
 				}
 			}
 		}
+	}
+
+	if float64(size)/float64(img.Bounds().Dx()) > 1 {
+		tmp := scale(img, size)
+		return &tmp
 	}
 
 	return img
@@ -570,4 +582,43 @@ func (q *QRCode) ToString(inverseColor bool) string {
 		buf.WriteString("\n")
 	}
 	return buf.String()
+}
+
+//getPointType return point type.
+func (q *QRCode) getPointType(x, y int) int {
+	qrSize := q.version.symbolSize()
+	// finderPatternPoint
+	if 0 <= x-q.symbol.quietZoneSize && x-q.symbol.quietZoneSize <= finderPatternSize && 0 <= y-q.symbol.quietZoneSize && y-q.symbol.quietZoneSize <= finderPatternSize { // top left
+		return finderPatternPoint
+	}
+	if qrSize-finderPatternSize <= x-q.symbol.quietZoneSize && x-q.symbol.quietZoneSize <= qrSize && 0 <= y-q.symbol.quietZoneSize && y-q.symbol.quietZoneSize <= finderPatternSize { // top right
+		return finderPatternPoint
+	}
+	if 0 <= x-q.symbol.quietZoneSize && x-q.symbol.quietZoneSize <= finderPatternSize && qrSize-finderPatternSize <= y-q.symbol.quietZoneSize && y-q.symbol.quietZoneSize <= qrSize { // bottom left
+		return finderPatternPoint
+	}
+	// alignmentPatternsPoint
+	alignmentPatternSize := len(alignmentPattern)
+	for _, x0 := range alignmentPatternCenter[q.version.version] {
+	TMP:
+		for _, y0 := range alignmentPatternCenter[q.version.version] {
+			// m.symbol.set2dPattern(x-2, y-2, alignmentPattern)
+			if x0-2 <= x-q.symbol.quietZoneSize && x-q.symbol.quietZoneSize < x0-2+alignmentPatternSize && y0-2 <= y-q.symbol.quietZoneSize && y-q.symbol.quietZoneSize < y0-2+alignmentPatternSize {
+				// there is alignment patterns.
+				for j, row := range alignmentPattern {
+					for i, value := range row {
+						if value != q.symbol.get(x0-2+i+q.symbol.quietZoneSize, y0-2+j+q.symbol.quietZoneSize) {
+							continue TMP
+						}
+					}
+				}
+				return alignmentPatternsPoint
+			}
+		}
+	}
+	// timingPatternsPoint
+	if (finderPatternSize+1 <= x && x <= q.symbol.size-finderPatternSize && y == finderPatternSize-1) || (x == finderPatternSize-1 && finderPatternSize+1 <= y && y <= q.symbol.size-finderPatternSize) {
+		return timingPatternsPoint
+	}
+	return 0
 }
