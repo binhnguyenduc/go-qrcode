@@ -2,6 +2,7 @@ package qrcode
 
 import (
 	"image"
+	"image/color/palette"
 	"image/gif"
 	"math"
 
@@ -11,8 +12,14 @@ import (
 
 // GifGenerator can generate a gif qr code
 func GifGenerator(q *QRCode, g gif.GIF, size int) *gif.GIF {
-
-	return &g
+	ng := gif.GIF{Image: make([]*image.Paletted, len(g.Image)), Delay: g.Delay, LoopCount: g.LoopCount}
+	for i, v := range g.Image {
+		tmp := ImageGenerator(q, v, size)
+		pl := image.NewPaletted(tmp.Bounds(), palette.Plan9)
+		draw.Draw(pl, pl.Bounds(), tmp, image.ZP, draw.Over)
+		ng.Image[i] = pl
+	}
+	return &ng
 }
 
 // ImageGenerator can generate a artistic qr code
@@ -81,6 +88,7 @@ func scale(g image.Image, size int) image.RGBA {
 	bg := image.NewRGBA(image.Rect(0, 0, size, size))
 	transform := draw.CatmullRom
 	tmp := newunits()
+	tmp.translate(float64(-g.Bounds().Min.X), float64(-g.Bounds().Min.Y))
 	tmp.sacle(float64(size)/float64(g.Bounds().Dx()), float64(size)/float64(g.Bounds().Dy()))
 	martix := tmp.getAff3()
 	transform.Transform(bg, martix,
