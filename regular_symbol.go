@@ -105,13 +105,13 @@ var (
 )
 
 func buildRegularSymbol(version qrCodeVersion, mask int,
-	data *bitset.Bitset) (*symbol, error) {
+	data *bitset.Bitset, margin int) (*symbol, error) {
 	m := &regularSymbol{
 		version: version,
 		mask:    mask,
 		data:    data,
 
-		symbol: newSymbol(version.symbolSize(), version.quietZoneSize()),
+		symbol: newSymbol(version.symbolSize(), margin),
 		size:   version.symbolSize(),
 	}
 

@@ -70,16 +70,16 @@ import (
 // variable sized image to be returned: See the documentation for Image().
 //
 // To serve over HTTP, remember to send a Content-Type: image/png header.
-func Encode(content string, level RecoveryLevel, size int) ([]byte, error) {
+func Encode(content string, level RecoveryLevel, width, height, margin int) ([]byte, error) {
 	var q *QRCode
 
-	q, err := New(content, level)
+	q, err := New(content, level, margin)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return q.PNG(size)
+	return q.PNG(width, height)
 }
 
 // WriteFile encodes, then writes a QR Code to the given filename in PNG format.
@@ -87,10 +87,10 @@ func Encode(content string, level RecoveryLevel, size int) ([]byte, error) {
 // size is both the image width and height in pixels. If size is too small then
 // a larger image is silently written. Negative values for size cause a variable
 // sized image to be written: See the documentation for Image().
-func WriteFile(content string, level RecoveryLevel, size int, filename string) error {
+func WriteFile(content string, level RecoveryLevel, size int, filename string, margin int) error {
 	var q *QRCode
 
-	q, err := New(content, level)
+	q, err := New(content, level, margin)
 
 	if err != nil {
 		return err
@@ -106,11 +106,11 @@ func WriteFile(content string, level RecoveryLevel, size int, filename string) e
 // a larger image is silently written. Negative values for size cause a variable
 // sized image to be written: See the documentation for Image().
 func WriteColorFile(content string, level RecoveryLevel, size int, background,
-	foreground color.Color, filename string) error {
+	foreground color.Color, filename string, margin int) error {
 
 	var q *QRCode
 
-	q, err := New(content, level)
+	q, err := New(content, level, margin)
 
 	q.BackgroundColor = background
 	q.ForegroundColor = foreground
@@ -120,6 +120,58 @@ func WriteColorFile(content string, level RecoveryLevel, size int, background,
 	}
 
 	return q.WriteFile(size, filename)
+}
+
+func EncodeWithLogo(level RecoveryLevel, str string, logo image.Image,
+	width, height, margin int) (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+	var colors color.Palette
+
+	code, err := New(str, level, margin)
+	if err != nil {
+		return nil, err
+	}
+
+	for x := 0; x < logo.Bounds().Max.X; x++ {
+		for y := 0; y < logo.Bounds().Max.Y; y++ {
+			if contains(logo.At(x, y), colors) {
+				continue
+			}
+			colors = append(colors, logo.At(x, y))
+		}
+	}
+	img := code.Image(width, height, colors)
+	overlayLogo(img, logo)
+
+	err = png.Encode(&buf, img)
+	if err != nil {
+		return nil, err
+	}
+
+	return &buf, nil
+}
+
+func contains(item color.Color, input color.Palette) bool {
+	for _, v := range input {
+		r1, g1, b1, a1 := item.RGBA()
+		r2, g2, b2, a2 := v.RGBA()
+		if r1 == r2 && g1 == g2 && b1 == b2 && a1 == a2 {
+			return true
+		}
+	}
+	return false
+}
+
+func overlayLogo(dst, src image.Image) {
+	offsetX := dst.Bounds().Max.X/2 - src.Bounds().Max.X/2
+	offsetY := dst.Bounds().Max.Y/2 - src.Bounds().Max.Y/2
+
+	for x := 0; x < src.Bounds().Max.X; x++ {
+		for y := 0; y < src.Bounds().Max.Y; y++ {
+			col := src.At(x, y)
+			dst.(*image.Paletted).Set(x+offsetX, y+offsetY, col)
+		}
+	}
 }
 
 // A QRCode represents a valid encoded QRCode.
@@ -149,7 +201,7 @@ type QRCode struct {
 //	q, err := qrcode.New("my content", qrcode.Medium)
 //
 // An error occurs if the content is too long.
-func New(content string, level RecoveryLevel) (*QRCode, error) {
+func New(content string, level RecoveryLevel, margin int) (*QRCode, error) {
 	encoders := []dataEncoderType{dataEncoderType1To9, dataEncoderType10To26,
 		dataEncoderType27To40}
 
@@ -193,12 +245,12 @@ func New(content string, level RecoveryLevel) (*QRCode, error) {
 		version: *chosenVersion,
 	}
 
-	q.encode(chosenVersion.numTerminatorBitsRequired(encoded.Len()))
+	q.encode(chosenVersion.numTerminatorBitsRequired(encoded.Len()), margin)
 
 	return q, nil
 }
 
-func newWithForcedVersion(content string, version int, level RecoveryLevel) (*QRCode, error) {
+func newWithForcedVersion(content string, version int, level RecoveryLevel, margin int) (*QRCode, error) {
 	var encoder *dataEncoder
 
 	switch {
@@ -239,7 +291,7 @@ func newWithForcedVersion(content string, version int, level RecoveryLevel) (*QR
 		version: *chosenVersion,
 	}
 
-	q.encode(chosenVersion.numTerminatorBitsRequired(encoded.Len()))
+	q.encode(chosenVersion.numTerminatorBitsRequired(encoded.Len()), margin)
 
 	return q, nil
 }
@@ -267,35 +319,44 @@ func (q *QRCode) Bitmap() [][]bool {
 // returned is the minimum size required for the QR Code. Choose a larger
 // negative number to increase the scale of the image. e.g. a size of -5 causes
 // each module (QR Code "pixel") to be 5px in size.
-func (q *QRCode) Image(size int) image.Image {
+func (q *QRCode) Image(width, height int, colors []color.Color) image.Image {
 	// Minimum pixels (both width and height) required.
 	realSize := q.symbol.size
-
 	// Variable size support.
-	if size < 0 {
-		size = size * -1 * realSize
+	if width < 0 {
+		width = width * -1 * realSize
+	}
+	if height < 0 {
+		height = height * -1 * realSize
 	}
 
 	// Actual pixels available to draw the symbol. Automatically increase the
 	// image size if it's not large enough.
-	if size < realSize {
-		size = realSize
+	if width < realSize {
+		width = realSize
+	}
+	if height < realSize {
+		height = realSize
 	}
 
 	// Size of each module drawn.
-	pixelsPerModule := size / realSize
+	pixelsPerModuleX := width / realSize
+	pixelsPerModuleY := height / realSize
 
 	// Center the symbol within the image.
-	offset := (size - realSize*pixelsPerModule) / 2
+	offsetX := (width - realSize*pixelsPerModuleX) / 2
+	offsetY := (height - realSize*pixelsPerModuleY) / 2
 
-	rect := image.Rectangle{Min: image.Point{0, 0}, Max: image.Point{size, size}}
+	rect := image.Rectangle{Min: image.Point{0, 0}, Max: image.Point{width, height}}
 
 	// Saves a few bytes to have them in this order
-	p := color.Palette([]color.Color{q.BackgroundColor, q.ForegroundColor})
+	colors = append(colors, color.Black)
+	colors = append(colors, color.White)
+	p := color.Palette(colors)
 	img := image.NewPaletted(rect, p)
 
-	for i := 0; i < size; i++ {
-		for j := 0; j < size; j++ {
+	for i := 0; i < width; i++ {
+		for j := 0; j < height; j++ {
 			img.Set(i, j, q.BackgroundColor)
 		}
 	}
@@ -304,10 +365,10 @@ func (q *QRCode) Image(size int) image.Image {
 	for y, row := range bitmap {
 		for x, v := range row {
 			if v {
-				startX := x*pixelsPerModule + offset
-				startY := y*pixelsPerModule + offset
-				for i := startX; i < startX+pixelsPerModule; i++ {
-					for j := startY; j < startY+pixelsPerModule; j++ {
+				startX := x*pixelsPerModuleX + offsetX
+				startY := y*pixelsPerModuleY + offsetY
+				for i := startX; i < startX+pixelsPerModuleX; i++ {
+					for j := startY; j < startY+pixelsPerModuleY; j++ {
 						img.Set(i, j, q.ForegroundColor)
 					}
 				}
@@ -323,8 +384,9 @@ func (q *QRCode) Image(size int) image.Image {
 // size is both the image width and height in pixels. If size is too small then
 // a larger image is silently returned. Negative values for size cause a
 // variable sized image to be returned: See the documentation for Image().
-func (q *QRCode) PNG(size int) ([]byte, error) {
-	img := q.Image(size)
+func (q *QRCode) PNG(width, height int) ([]byte, error) {
+	var colors = []color.Color{color.White, color.Black}
+	img := q.Image(width, height, colors)
 
 	encoder := png.Encoder{CompressionLevel: png.BestCompression}
 
@@ -346,7 +408,7 @@ func (q *QRCode) PNG(size int) ([]byte, error) {
 func (q *QRCode) Write(size int, out io.Writer) error {
 	var png []byte
 
-	png, err := q.PNG(size)
+	png, err := q.PNG(size, size)
 
 	if err != nil {
 		return err
@@ -363,7 +425,7 @@ func (q *QRCode) Write(size int, out io.Writer) error {
 func (q *QRCode) WriteFile(size int, filename string) error {
 	var png []byte
 
-	png, err := q.PNG(size)
+	png, err := q.PNG(size, size)
 
 	if err != nil {
 		return err
@@ -375,7 +437,7 @@ func (q *QRCode) WriteFile(size int, filename string) error {
 // encode completes the steps required to encode the QR Code. These include
 // adding the terminator bits and padding, splitting the data into blocks and
 // applying the error correction, and selecting the best data mask.
-func (q *QRCode) encode(numTerminatorBits int) {
+func (q *QRCode) encode(numTerminatorBits int, margin int) {
 	q.addTerminatorBits(numTerminatorBits)
 	q.addPadding()
 
@@ -388,7 +450,7 @@ func (q *QRCode) encode(numTerminatorBits int) {
 		var s *symbol
 		var err error
 
-		s, err = buildRegularSymbol(q.version, mask, encoded)
+		s, err = buildRegularSymbol(q.version, mask, encoded, margin)
 
 		if err != nil {
 			log.Panic(err.Error())
