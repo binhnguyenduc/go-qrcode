@@ -1,6 +1,6 @@
 # go-qrcode #
 
-<img src='https://skip.org/img/nyancat-youtube-qr.png' align='right'>
+
 
 Package qrcode implements a QR Code encoder. [![Build Status](https://travis-ci.org/skip2/go-qrcode.svg?branch=master)](https://travis-ci.org/skip2/go-qrcode)
 
@@ -10,13 +10,13 @@ Each QR Code contains error recovery information to aid reading damaged or obscu
 
 ## Install
 
-    go get -u github.com/skip2/go-qrcode/...
+    go get -u github.com/EternalHunters/go-qrcode/...
 
 A command-line tool `qrcode` will be built into `$GOPATH/bin/`.
 
 ## Usage
 
-    import qrcode "github.com/skip2/go-qrcode"
+    import qrcode "github.com/EternalHunters/go-qrcode"
 
 - **Create a PNG image:**
 
@@ -30,6 +30,10 @@ A command-line tool `qrcode` will be built into `$GOPATH/bin/`.
 - **Create a PNG image with custom colors and write to file:**
 
         err := qrcode.WriteColorFile("https://example.org", qrcode.Medium, 256, color.Black, color.White, "qr.png")
+- **Create a PNG image with logo and custom size and margin:**
+        code ,err:=qrcode.EncodeWithLogo(qrcode.Medium, "123", logo, 100, 200, 5)
+        //The function define:
+        func EncodeWithLogo(level RecoveryLevel, str string, logo image.Image,width, height, margin int) (*bytes.Buffer, error){xxx}
 
 All examples use the qrcode.Medium error Recovery Level and create a fixed
 256x256px size QR Code. The last function creates a white on black instead of black
