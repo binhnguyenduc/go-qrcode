@@ -30,6 +30,12 @@ A command-line tool `qrcode` will be built into `$GOPATH/bin/`.
 - **Create a PNG image with custom colors and write to file:**
 
         err := qrcode.WriteColorFile("https://example.org", qrcode.Medium, 256, color.Black, color.White, "qr.png")
+- **Create a png qr image with image file:**
+
+        pngQr := qrcode.ImageGenerator(qrCode,"background.jpg",200)
+- **Create a gif qr image with gif file:**
+
+        gifQr := qrcode.GifGenerator(qrCode,"background.gif",200)
 
 All examples use the qrcode.Medium error Recovery Level and create a fixed
 256x256px size QR Code. The last function creates a white on black instead of black
