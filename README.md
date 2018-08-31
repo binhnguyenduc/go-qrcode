@@ -44,6 +44,8 @@ on white QR Code.
 The maximum capacity of a QR Code varies according to the content encoded and
 the error recovery level. The maximum capacity is 2,953 bytes, 4,296
 alphanumeric characters, 7,089 numeric digits, or a combination of these.
+## TestImage
+![avatar](light.gif) ![avatar](qrcode.png)<br>
 
 ## Documentation
 
