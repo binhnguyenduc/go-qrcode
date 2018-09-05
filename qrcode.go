@@ -59,6 +59,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/nfnt/resize"
 	bitset "github.com/skip2/go-qrcode/bitset"
 	reedsolomon "github.com/skip2/go-qrcode/reedsolomon"
 )
@@ -132,9 +133,10 @@ func EncodeWithLogo(level RecoveryLevel, str string, logo image.Image,
 		return nil, err
 	}
 
+	logo = resize.Resize(40, 40, logo, resize.NearestNeighbor)
 	for x := 0; x < logo.Bounds().Max.X; x++ {
 		for y := 0; y < logo.Bounds().Max.Y; y++ {
-			if contains(logo.At(x, y), colors) {
+			if contains(logo.At(x, y), colors) || len(colors) == 254 {
 				continue
 			}
 			colors = append(colors, logo.At(x, y))
