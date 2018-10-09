@@ -21,13 +21,8 @@ import (
 // you're not running the tests. Use the -test-decode flag (go test
 // -test-decode) to enable.
 
-var testDecode *bool = flag.Bool("test-decode",
-	false,
-	"Enable decode tests. Requires zbarimg installed.")
-
-var testDecodeFuzz *bool = flag.Bool("test-decode-fuzz",
-	false,
-	"Enable decode fuzz tests. Requires zbarimg installed.")
+var testDecode = flag.Bool("test-decode", false, "Enable decode tests. Requires zbarimg installed.")
+var testDecodeFuzz = flag.Bool("test-decode-fuzz", false, "Enable decode fuzz tests. Requires zbarimg installed.")
 
 func TestDecodeBasic(t *testing.T) {
 	if !*testDecode {
@@ -69,7 +64,7 @@ func TestDecodeBasic(t *testing.T) {
 	for _, test := range tests {
 		content := strings.Repeat(test.content, test.numRepetitions)
 
-		q, err := New(content, test.level, 0, nil)
+		q, err := New(content, Level(test.level))
 		if err != nil {
 			t.Error(err.Error())
 		}
@@ -93,7 +88,7 @@ func TestDecodeAllVersionLevels(t *testing.T) {
 				version,
 				level)
 
-			q, err := newWithForcedVersion(fmt.Sprintf("v-%d l-%d", version, level), version, level, 0)
+			q, err := newWithForcedVersion(fmt.Sprintf("v-%d l-%d", version, level), version, level)
 			if err != nil {
 				t.Fatal(err.Error())
 				return
@@ -124,7 +119,7 @@ func TestDecodeAllCharacters(t *testing.T) {
 		content += string(i)
 	}
 
-	q, err := New(content, Low, 0, nil)
+	q, err := New(content, Level(Low))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -147,17 +142,17 @@ func TestDecodeFuzz(t *testing.T) {
 	const maxLength int = 128
 
 	for i := 0; i < iterations; i++ {
-		len := r.Intn(maxLength-1) + 1
+		length := r.Intn(maxLength-1) + 1
 
 		var content string
-		for j := 0; j < len; j++ {
+		for j := 0; j < length; j++ {
 			// zbarimg seems to have trouble with special characters, test printable
 			// characters only for now.
 			content += string(32 + r.Intn(94))
 		}
 
 		for _, level := range []RecoveryLevel{Low, Medium, High, Highest} {
-			q, err := New(content, level, 0, nil)
+			q, err := New(content, Level(level))
 			if err != nil {
 				t.Error(err.Error())
 			}
@@ -178,7 +173,8 @@ func zbarimgCheck(q *QRCode) error {
 	}
 
 	if s != q.Content {
-		q.WriteFile(256, fmt.Sprintf("%x.png", q.Content))
+		q.Set(Width(256), Height(256))
+		q.WriteFile(fmt.Sprintf("%x.png", q.Content))
 		return fmt.Errorf("got '%s' (%x) expected '%s' (%x)", s, s, q.Content, q.Content)
 	}
 
@@ -189,13 +185,13 @@ func zbarimgDecode(q *QRCode) (string, error) {
 	var png []byte
 
 	// 512x512px
-	png, err := q.PNG(512, 512)
+	q.Set(Width(512), Height(512))
+	png, err := q.PNG()
 	if err != nil {
 		return "", err
 	}
 
-	cmd := exec.Command("zbarimg", "--quiet", "-Sdisable",
-		"-Sqrcode.enable", "/dev/stdin")
+	cmd := exec.Command("zbarimg", "--quiet", "-Sdisable", "-Sqrcode.enable", "/dev/stdin")
 
 	var out bytes.Buffer
 
@@ -217,7 +213,7 @@ func BenchmarkDecodeTest(b *testing.B) {
 	}
 
 	for n := 0; n < b.N; n++ {
-		q, err := New("content", Medium, 0, nil)
+		q, err := New("content", Level(Medium))
 		if err != nil {
 			b.Error(err.Error())
 		}

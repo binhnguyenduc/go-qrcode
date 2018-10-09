@@ -37,7 +37,7 @@ func TestQRCodeMaxCapacity(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := New(strings.Repeat(test.string, test.numRepetitions), Low, 0, nil)
+		_, err := New(strings.Repeat(test.string, test.numRepetitions), Level(Low))
 
 		if err != nil {
 			t.Errorf("%d x '%s' got %s expected success", test.numRepetitions,
@@ -46,7 +46,7 @@ func TestQRCodeMaxCapacity(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := New(strings.Repeat(test.string, test.numRepetitions+1), Low, 0, nil)
+		_, err := New(strings.Repeat(test.string, test.numRepetitions+1), Level(Low))
 
 		if err == nil {
 			t.Errorf("%d x '%s' chars encodable, expected not encodable",
@@ -110,17 +110,17 @@ func TestQRCodeVersionCapacity(t *testing.T) {
 		var b *QRCode
 		var err error
 
-		n, err = New(numericData, test.level, 0, nil)
+		n, err = New(numericData, Level(test.level))
 		if err != nil {
 			t.Fatal(err.Error())
 		}
 
-		a, err = New(alphanumericData, test.level, 0, nil)
+		a, err = New(alphanumericData, Level(test.level))
 		if err != nil {
 			t.Fatal(err.Error())
 		}
 
-		b, err = New(byteData, test.level, 0, nil)
+		b, err = New(byteData, Level(test.level))
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -144,7 +144,7 @@ func TestQRCodeVersionCapacity(t *testing.T) {
 
 func TestQRCodeISOAnnexIExample(t *testing.T) {
 	var q *QRCode
-	q, err := New("01234567", Medium, 0, nil)
+	q, err := New("01234567", Level(Medium))
 
 	if err != nil {
 		t.Fatalf("Error producing ISO Annex I Example: %s, expected success",
@@ -161,13 +161,13 @@ func TestQRCodeISOAnnexIExample(t *testing.T) {
 
 func BenchmarkQRCodeURLSize(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		New("http://www.example.org", Medium, 0, nil)
+		New("http://www.example.org", Level(Medium))
 	}
 }
 
 func BenchmarkQRCodeMaximumSize(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		// 7089 is the maximum encodable number of numeric digits.
-		New(strings.Repeat("0", 7089), Low, 0, nil)
+		New(strings.Repeat("0", 7089), Level(Low))
 	}
 }

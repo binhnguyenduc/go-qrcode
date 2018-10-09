@@ -47,9 +47,13 @@ Usage:
 
 	content := strings.Join(flag.Args(), " ")
 
-	var err error
-	var q *qrcode.QRCode
-	q, err = qrcode.New(content, qrcode.Highest, 0, nil)
+	var opts = []qrcode.Option{
+		qrcode.Width(*size),
+		qrcode.Height(*size),
+		qrcode.Level(qrcode.Highest),
+	}
+
+	q, err := qrcode.New(content, opts...)
 	checkError(err)
 
 	if *textArt {
@@ -63,7 +67,7 @@ Usage:
 	}
 
 	var png []byte
-	png, err = q.PNG(*size, *size)
+	png, err = q.PNG()
 	checkError(err)
 
 	if *outFile == "" {

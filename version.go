@@ -52,7 +52,7 @@ type qrCodeVersion struct {
 	// stream up to the symbol's full capacity.
 	numRemainderBits int
 
-	//quietZoneSize,white space bit
+	// quietZoneSize,white space bit
 	blankAreaSize int
 }
 

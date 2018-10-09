@@ -104,8 +104,7 @@ var (
 	}
 )
 
-func buildRegularSymbol(version qrCodeVersion, mask int,
-	data *bitset.Bitset, margin int) (*symbol, error) {
+func buildRegularSymbol(version qrCodeVersion, mask int, data *bitset.Bitset, margin int) (*symbol, error) {
 	m := &regularSymbol{
 		version: version,
 		mask:    mask,
