@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	qrcode "github.com/skip2/go-qrcode"
+	"github.com/yougg/go-qrcode"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	negative := flag.Bool("i", false, "invert black and white")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `qrcode -- QR Code encoder in Go
-https://github.com/skip2/go-qrcode
+https://github.com/yougg/go-qrcode
 
 Flags:
 `)
@@ -34,7 +34,7 @@ Usage:
 
   2. Save to file if "display" not available:
 
-       qrcode "homepage: https://github.com/skip2/go-qrcode" > out.png
+       qrcode "homepage: https://github.com/yougg/go-qrcode" > out.png
 
 `)
 	}
@@ -49,7 +49,7 @@ Usage:
 
 	var err error
 	var q *qrcode.QRCode
-	q, err = qrcode.New(content, qrcode.Highest)
+	q, err = qrcode.New(content, qrcode.Highest, 0, nil)
 	checkError(err)
 
 	if *textArt {
@@ -63,7 +63,7 @@ Usage:
 	}
 
 	var png []byte
-	png, err = q.PNG(*size)
+	png, err = q.PNG(*size, *size)
 	checkError(err)
 
 	if *outFile == "" {

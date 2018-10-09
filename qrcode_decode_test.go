@@ -69,7 +69,7 @@ func TestDecodeBasic(t *testing.T) {
 	for _, test := range tests {
 		content := strings.Repeat(test.content, test.numRepetitions)
 
-		q, err := New(content, test.level)
+		q, err := New(content, test.level, 0, nil)
 		if err != nil {
 			t.Error(err.Error())
 		}
@@ -93,8 +93,7 @@ func TestDecodeAllVersionLevels(t *testing.T) {
 				version,
 				level)
 
-			q, err := newWithForcedVersion(
-				fmt.Sprintf("v-%d l-%d", version, level), version, level)
+			q, err := newWithForcedVersion(fmt.Sprintf("v-%d l-%d", version, level), version, level, 0)
 			if err != nil {
 				t.Fatal(err.Error())
 				return
@@ -125,7 +124,7 @@ func TestDecodeAllCharacters(t *testing.T) {
 		content += string(i)
 	}
 
-	q, err := New(content, Low)
+	q, err := New(content, Low, 0, nil)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -158,7 +157,7 @@ func TestDecodeFuzz(t *testing.T) {
 		}
 
 		for _, level := range []RecoveryLevel{Low, Medium, High, Highest} {
-			q, err := New(content, level)
+			q, err := New(content, level, 0, nil)
 			if err != nil {
 				t.Error(err.Error())
 			}
@@ -190,7 +189,7 @@ func zbarimgDecode(q *QRCode) (string, error) {
 	var png []byte
 
 	// 512x512px
-	png, err := q.PNG(512)
+	png, err := q.PNG(512, 512)
 	if err != nil {
 		return "", err
 	}
@@ -218,7 +217,7 @@ func BenchmarkDecodeTest(b *testing.B) {
 	}
 
 	for n := 0; n < b.N; n++ {
-		q, err := New("content", Medium)
+		q, err := New("content", Medium, 0, nil)
 		if err != nil {
 			b.Error(err.Error())
 		}

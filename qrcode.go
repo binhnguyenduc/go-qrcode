@@ -60,8 +60,8 @@ import (
 	"os"
 
 	"github.com/nfnt/resize"
-	bitset "github.com/skip2/go-qrcode/bitset"
-	reedsolomon "github.com/skip2/go-qrcode/reedsolomon"
+	"github.com/yougg/go-qrcode/bitset"
+	"github.com/yougg/go-qrcode/reedsolomon"
 )
 
 const (
@@ -135,7 +135,7 @@ func EncodeWithLogo(level RecoveryLevel, str string, logo image.Image,
 	var buf bytes.Buffer
 	var colors color.Palette
 
-	code, err := New(str, level, margin)
+	code, err := New(str, level, margin, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -403,8 +403,8 @@ func (q *QRCode) Image(width, height int, colors []color.Color) image.Image {
 		}
 	}
 
-	if float64(size)/float64(img.Bounds().Dx()) > 1 {
-		tmp := scale(img, size)
+	if float64(width)/float64(img.Bounds().Dx()) > 1 {
+		tmp := scale(img, width)
 		return &tmp
 	}
 

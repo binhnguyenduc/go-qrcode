@@ -14,7 +14,7 @@ import (
 )
 
 func TestExampleEncode(t *testing.T) {
-	if png, err := Encode("https://example.org", Medium, 256); err != nil {
+	if png, err := Encode("https://example.org", Medium, 256, 256, 0); err != nil {
 		t.Errorf("Error: %s", err.Error())
 	} else {
 		fmt.Printf("PNG is %d bytes long", len(png))
@@ -23,7 +23,7 @@ func TestExampleEncode(t *testing.T) {
 
 func TestExampleWriteFile(t *testing.T) {
 	filename := "example.png"
-	if err := WriteFile("https://example.org", Medium, 256, filename); err != nil {
+	if err := WriteFile("https://example.org", Medium, 256, filename, 0); err != nil {
 		if err = os.Remove(filename); err != nil {
 			t.Errorf("Error: %s", err.Error())
 		}
