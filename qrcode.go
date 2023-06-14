@@ -174,7 +174,7 @@ func EncodeWithLogo(content string, level RecoveryLevel, logo image.Image, width
 			colors = append(colors, logo.At(x, y)) // FIXME colors to code.Image()
 		}
 	}
-	img := code.Image()
+	img := code.Image(colors)
 	overlayLogo(img, logo)
 
 	err = png.Encode(&buf, img)
@@ -365,7 +365,7 @@ func (q *QRCode) Bitmap() [][]bool {
 // returned is the minimum size required for the QR Code. Choose a larger
 // negative number to increase the scale of the image. e.g. a size of -5 causes
 // each module (QR Code "pixel") to be 5px in size.
-func (q *QRCode) Image() image.Image {
+func (q *QRCode) Image(colors color.Palette) image.Image {
 	// Minimum pixels (both width and height) required.
 	realSize := q.symbol.size
 
@@ -394,10 +394,13 @@ func (q *QRCode) Image() image.Image {
 	offsetX := (q.width - realSize*pixelsPerModuleX) / 2
 	offsetY := (q.height - realSize*pixelsPerModuleY) / 2
 
-	rect := image.Rectangle{Min: image.Point{0, 0}, Max: image.Point{X: q.width, Y: q.height}}
+	rect := image.Rectangle{Min: image.Point{}, Max: image.Point{X: q.width, Y: q.height}}
 
 	// Saves a few bytes to have them in this order
 	p := color.Palette([]color.Color{q.BackgroundColor, q.ForegroundColor})
+	if len(colors) > 0 {
+		p = append(p, colors...)
+	}
 	img := image.NewPaletted(rect, p)
 
 	for i := 0; i < q.width; i++ {
@@ -435,7 +438,7 @@ func (q *QRCode) Image() image.Image {
 // a larger image is silently returned. Negative values for size cause a
 // variable sized image to be returned: See the documentation for Image().
 func (q *QRCode) PNG() ([]byte, error) {
-	img := q.Image()
+	img := q.Image(nil)
 
 	encoder := png.Encoder{CompressionLevel: png.BestCompression}
 
