@@ -61,8 +61,8 @@ import (
 
 	"github.com/nfnt/resize"
 
-	"github.com/yougg/go-qrcode/bitset"
-	"github.com/yougg/go-qrcode/reedsolomon"
+	"github.com/binhnguyenduc/go-qrcode/bitset"
+	"github.com/binhnguyenduc/go-qrcode/reedsolomon"
 )
 
 const (

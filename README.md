@@ -10,13 +10,13 @@ Each QR Code contains error recovery information to aid reading damaged or obscu
 
 ## Install
 
-    go get -u github.com/yougg/go-qrcode/...
+    go get -u github.com/binhnguyenduc/go-qrcode/...
 
 A command-line tool `qrcode` will be built into `$GOPATH/bin/`.
 
 ## Usage
 
-    import qrcode "github.com/yougg/go-qrcode"
+    import qrcode "github.com/binhnguyenduc/go-qrcode"
 
 - **Create a PNG image:**
 
@@ -53,7 +53,7 @@ alphanumeric characters, 7,089 numeric digits, or a combination of these.
 
 ## Documentation
 
-[![godoc](https://godoc.org/github.com/yougg/go-qrcode?status.png)](https://godoc.org/github.com/yougg/go-qrcode)
+[![godoc](https://godoc.org/github.com/binhnguyenduc/go-qrcode?status.png)](https://godoc.org/github.com/binhnguyenduc/go-qrcode)
 
 ## Demoapp
 
@@ -65,7 +65,7 @@ A command-line tool `qrcode` will be built into `$GOPATH/bin/`.
 
 ```
 qrcode -- QR Code encoder in Go
-https://github.com/yougg/go-qrcode
+https://github.com/binhnguyenduc/go-qrcode
 
 Flags:
   -o string
@@ -82,7 +82,7 @@ Usage:
 
   2. Save to file if "display" not available:
 
-       qrcode "homepage: https://github.com/yougg/go-qrcode" > out.png
+       qrcode "homepage: https://github.com/binhnguyenduc/go-qrcode" > out.png
 ```
 
 ## Links

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/yougg/go-qrcode/bitset"
+	"github.com/binhnguyenduc/go-qrcode/bitset"
 )
 
 // gfPoly is a polynomial over GF(2^8).

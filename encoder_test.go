@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/yougg/go-qrcode/bitset"
+	"github.com/binhnguyenduc/go-qrcode/bitset"
 )
 
 func TestClassifyDataMode(t *testing.T) {
