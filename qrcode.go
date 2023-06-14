@@ -163,8 +163,8 @@ func EncodeWithLogo(content string, level RecoveryLevel, logo image.Image, width
 		return nil, err
 	}
 
-	logoWidth := width * int(overlayRatio)
-	logoHeight := height * int(overlayRatio)
+	logoWidth := int(float64(width) * overlayRatio)
+	logoHeight := int(float64(height) * overlayRatio)
 	logo = resize.Resize(uint(logoWidth), uint(logoHeight), logo, resize.NearestNeighbor)
 	for x := 0; x < logo.Bounds().Max.X; x++ {
 		for y := 0; y < logo.Bounds().Max.Y; y++ {
@@ -175,7 +175,7 @@ func EncodeWithLogo(content string, level RecoveryLevel, logo image.Image, width
 		}
 	}
 	img := code.Image()
-	// overlayLogo(img, logo)
+	overlayLogo(img, logo)
 
 	err = png.Encode(&buf, img)
 	if err != nil {
