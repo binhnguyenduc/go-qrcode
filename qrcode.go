@@ -60,6 +60,7 @@ import (
 	"os"
 
 	"github.com/nfnt/resize"
+
 	"github.com/yougg/go-qrcode/bitset"
 	"github.com/yougg/go-qrcode/reedsolomon"
 )
@@ -141,19 +142,30 @@ func WriteColorFile(content string, level RecoveryLevel, size int, background, f
 	return q.WriteFile(filename)
 }
 
-func EncodeWithLogo(level RecoveryLevel, str string, logo image.Image, margin int) (*bytes.Buffer, error) {
+// EncodeWithLogo a QR Code with a logo overlay and return a raw PNG image.
+//
+// size is both the image width and height in pixels. If size is too small then
+// a larger image is silently returned. Negative values for size cause a
+// variable sized image to be returned: See the documentation for Image().
+//
+// To serve over HTTP, remember to send a Content-Type: image/png header.
+func EncodeWithLogo(content string, level RecoveryLevel, logo image.Image, width, height, margin int, overlayRatio float64) (*bytes.Buffer, error) {
 	var buf bytes.Buffer
 	var colors color.Palette
 	var opts = []Option{
 		Level(level),
+		Width(width),
+		Height(height),
 		Margin(margin),
 	}
-	code, err := New(str, opts...)
+	code, err := New(content, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	logo = resize.Resize(40, 40, logo, resize.NearestNeighbor)
+	logoWidth := width * int(overlayRatio)
+	logoHeight := height * int(overlayRatio)
+	logo = resize.Resize(uint(logoWidth), uint(logoHeight), logo, resize.NearestNeighbor)
 	for x := 0; x < logo.Bounds().Max.X; x++ {
 		for y := 0; y < logo.Bounds().Max.Y; y++ {
 			if contains(logo.At(x, y), colors) || len(colors) == 254 {
@@ -235,8 +247,8 @@ func (q *QRCode) Set(opts ...Option) {
 
 // New constructs a QRCode.
 //
-// 	var q *qrcode.QRCode
-// 	q, err := qrcode.New("my content", qrcode.Medium)
+//	var q *qrcode.QRCode
+//	q, err := qrcode.New("my content", qrcode.Medium)
 //
 // An error occurs if the content is too long.
 func New(content string, opts ...Option) (*QRCode, error) {
