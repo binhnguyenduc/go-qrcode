@@ -175,7 +175,7 @@ func EncodeWithLogo(content string, level RecoveryLevel, logo image.Image, width
 		}
 	}
 	img := code.Image()
-	overlayLogo(img, logo)
+	// overlayLogo(img, logo)
 
 	err = png.Encode(&buf, img)
 	if err != nil {
